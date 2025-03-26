@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>单词配对游戏</title>
+    <style>
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .cell {
+            padding: 10px;
+            border: 1px solid #ccc;
+            text-align: center;
+            cursor: pointer;
+            box-sizing: border-box;
+        }
+        .highlight {
+            background-color: yellow;
+        }
+        .controls {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="grid-container" id="englishGrid"></div>
+<div class="grid-container" id="chineseGrid"></div>
+<div class="controls">
+    <button onclick="reloadQuestion()">重新出题</button>
+</div>
+<script>
+    let allWords = JSON.parse(localStorage.getItem('words'));
+    let inputWordsNum = localStorage.getItem('inputWordsNum') !== null ? localStorage.getItem('inputWordsNum') : 20;
+    // 如果需要将结果作为数字而不是字符串，可以进行如下转换
+    inputWordsNum = parseInt(inputWordsNum, 10);
+    if (isNaN(inputWordsNum)) {
+       inputWordsNum = 20;
+    }
+
+    let selectedEng = null;
+    let attempts = {};
+    const totalPairs = allWords.length;
+    const batchSize = inputWordsNum;
+    let currentBatchIndex = 0;
+    let currentWordsNum = inputWordsNum;
+    shuffleArray(allWords);
+    if (!allWords || allWords.length === 0) {
+        alert('请先输入单词！');
+        window.location.href = 'welcome.html';
+    }
+
+    function loadCurrentBatch() {
+        debugger;
+        let words = allWords.slice(currentBatchIndex * batchSize, (currentBatchIndex + 1) * batchSize);
+        if(words.length === 0){
+            window.location.href = 'success.html';
+            return;
+        }
+        fetchQuestion(words);
+    }
+
+    function fetchQuestion(words) {
+         // 分别打乱英文单词和中文翻译
+        let wordPairs = words.map(word => ({eng: word.eng, chn: word.chn}));
+
+        const shuffledWords = [...wordPairs];
+        shuffleArray(shuffledWords);
+
+
+        const englishGrid = document.getElementById('englishGrid');
+        const chineseGrid = document.getElementById('chineseGrid');
+
+        // 添加英文单词到网格的左侧
+        shuffledWords.forEach((item) => {
+            let div = document.createElement('div');
+            div.className = 'cell';
+            div.dataset.eng = item.eng;
+            div.textContent = item.eng;
+            div.onclick = () => selectEnglish(item);
+            englishGrid.appendChild(div);
+        });
+
+        const shuffledTranslations = [...wordPairs];
+        shuffleArray(shuffledTranslations);
+        // 添加中文翻译到网格的右侧
+        shuffledTranslations.forEach((item) => {
+            let div = document.createElement('div');
+            div.className = 'cell';
+            div.dataset.chn = item.chn;
+            div.textContent = item.chn;
+            div.onclick = () => selectChinese(item);
+            chineseGrid.appendChild(div);
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadCurrentBatch();
+    });
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
+    function selectEnglish(word) {
+        clearHighlights();
+        selectedEng = word;
+        highlightCell(word.eng, 'eng');
+    }
+
+    function selectChinese(word) {
+        if (!selectedEng) return;
+
+        if (selectedEng.chn === word.chn) {
+            hideCells(selectedEng.eng, word.chn);
+            checkCompletion();
+            selectedEng = null;
+        } else {
+            let attemptKey = `${selectedEng.eng}-${word.chn}`;
+            attempts[attemptKey] = (attempts[attemptKey] || 0) + 1;
+            if (attempts[attemptKey] >= 3) {
+                alert('闯关失败，请重新开始!');
+                window.location.reload();
+            } else {
+                alert('匹配失败，再好好想想?');
+            }
+        }
+    }
+
+    function highlightCell(text, type) {
+        document.querySelectorAll('.cell').forEach(cell => {
+            if (cell.dataset[type] === text) {
+                cell.classList.add('highlight');
+            }
+        });
+    }
+
+    function hideCells(engText, chnText) {
+        document.querySelectorAll('.cell').forEach(cell => {
+            if (cell.dataset.eng === engText || cell.dataset.chn === chnText) {
+                cell.style.display = 'none';
+            }
+        });
+    }
+
+    function clearHighlights() {
+        document.querySelectorAll('.cell').forEach(cell => cell.classList.remove('highlight'));
+    }
+
+    function reloadQuestion() {
+        window.location.href = 'welcome.html';
+    }
+
+    function checkCompletion() {
+        const hiddenCells = document.querySelectorAll('.cell[style*="display: none"]');
+        let currentPageHiddenCells = hiddenCells.length - currentBatchIndex * batchSize * 2;
+        if (currentPageHiddenCells / 2 === currentWordsNum) {
+            currentBatchIndex++;
+            localStorage.setItem('currentBatchIndex', currentBatchIndex);
+            let words = allWords.slice(currentBatchIndex * batchSize, (currentBatchIndex + 1) * batchSize);
+            if (words.length < batchSize) {
+               currentWordsNum = words.length;
+            }
+<!--            localStorage.setItem('words', JSON.stringify(words));-->
+            loadCurrentBatch();
+        }
+    }
+</script>
+</body>
+</html>

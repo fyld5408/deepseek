@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>单词配对游戏</title>
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/jquery.dataTables.css">
+    <style>
+        #wordTable_wrapper {
+            width: 100%;
+        }
+        td input {
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .input-section {
+            margin-top: 20px;
+        }
+        .input-section textarea {
+            width: 48%;
+            height: 100px;
+            display: inline-block;
+            vertical-align: top;
+            margin-right: 1%;
+        }
+    </style>
+</head>
+<body>
+
+<h2>请输入每次最多可以消除的单词数</h2>
+<label for="inputWordsNum">请输入每次最多可以消除的单词数:</label>
+<input type="number" id="inputWordsNum" min="1" max="100">
+
+<h2>请输入英语单词和中文翻译（最多100行）</h2>
+<label for="rowsNumber">请输入要生成的行数:</label>
+<input type="number" id="rowsNumber" min="1" max="100">
+<button type="button" onclick="generateRows()">生成行数</button><br/><br/>
+<table id="wordTable">
+    <thead>
+    <tr>
+        <th>英语单词</th>
+        <th>中文翻译</th>
+    </tr>
+    </thead>
+    <tbody>
+    <!-- 初始行将通过JavaScript动态添加 -->
+    </tbody>
+</table>
+<button type="button" onclick="startGame('dataTable')">确认</button>
+
+<div class="input-section">
+    <h3>或者直接粘贴Excel数据：</h3>
+    <textarea id="englishWords" placeholder="英语单词（每行一个单词）"></textarea>
+    <textarea id="chineseTranslations" placeholder="中文翻译（每行一个翻译）"></textarea>
+    <button type="button" onclick="startGame('excelCopy')">Excel复制</button>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.js"></script>
+<script>
+        let table;
+
+        $(document).ready(function() {
+            // 初始化DataTables
+            table = $('#wordTable').DataTable({
+                "paging": false,
+                "info": false,
+                "searching": false,
+                "columns": [
+                    { "title": "英语单词" },
+                    { "title": "中文翻译" }
+                ],
+                "columnDefs": [{
+                    "render": function () {
+                        return '<input type="text" style="width:100%"/>';
+                    },
+                    "targets": '_all'
+                }]
+            });
+        });
+
+        function generateRows() {
+            const rowsNumber = parseInt(document.getElementById('rowsNumber').value);
+            if (isNaN(rowsNumber) || rowsNumber < 1 || rowsNumber > 100) {
+                alert("请输入1到100之间的数字");
+                return;
+            }
+
+            // 清空现有数据
+            table.clear().draw();
+
+            // 创建新的空数据行
+            const newData = Array.from({ length: rowsNumber }, () => ['<input type="text" style="width:100%"/>', '<input type="text" style="width:100%"/>']);
+            newData.forEach(row => table.row.add(row).draw());
+        }
+
+        function startGame(source) {
+            let data = [];
+            if (source === 'dataTable') {
+                // 获取表格中的数据
+                $('#wordTable tbody tr').each(function() {
+                    const eng = $(this).find('td').eq(0).find('input').val();
+                    const chn = $(this).find('td').eq(1).find('input').val();
+                    if (eng && chn) {
+                        data.push({ eng, chn });
+                    }
+                });
+            } else if (source === 'excelCopy') {
+                // 获取文本框中的数据
+                const englishWords = document.getElementById('englishWords').value.split('\n').map(s => s.trim()).filter(Boolean);
+                const chineseTranslations = document.getElementById('chineseTranslations').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+                const maxLength = Math.max(englishWords.length, chineseTranslations.length);
+                for (let i = 0; i < maxLength; i++) {
+                    const eng = englishWords[i] || '';
+                    const chn = chineseTranslations[i] || '';
+                    if (eng || chn) {
+                        data.push({ eng, chn });
+                    }
+                }
+            }
+
+            localStorage.setItem('words', JSON.stringify(data));
+            localStorage.setItem('inputWordsNum', parseInt(document.getElementById('inputWordsNum').value));
+            window.location.href = 'game.html';
+        }
+    </script>
+</body>
+</html>

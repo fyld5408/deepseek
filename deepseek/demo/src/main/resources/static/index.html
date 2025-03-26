@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>人人都是产品经理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            min-height: 100vh;
+            flex-direction: column;
+        }
+        .header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 1em 0;
+            font-size: 1.5em;
+        }
+        .container {
+            flex: 1;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .menu {
+            background-color: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 300px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .menu-item {
+            padding: 20px;
+            text-decoration: none;
+            color: #333;
+            display: block;
+            transition: background-color 0.3s ease;
+        }
+        .menu-item:hover {
+            background-color: #f1f1f1;
+        }
+        .menu-item + .menu-item {
+            border-top: 1px solid #ddd;
+        }
+    </style>
+</head>
+<body>
+<div class="header">人人都是产品经理</div>
+<div class="container">
+    <div class="menu">
+        <a href="/excel/excel.html" class="menu-item">Excel小工具</a>
+        <a href="/wordgame/welcome.html" class="menu-item">单词消消乐</a>
+    </div>
+</div>
+</body>
+</html>

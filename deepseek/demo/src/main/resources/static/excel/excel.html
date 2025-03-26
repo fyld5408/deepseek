@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload and Download Excel</title>
+</head>
+<body>
+<form id="uploadForm" enctype="multipart/form-data">
+  <input type="file" name="file" accept=".xlsx, .xls"/>
+  <button type="button" onclick="uploadFile()">Upload</button>
+</form>
+
+<a id="downloadLink" style="display:none">Download Result</a>
+
+<script>
+    function uploadFile() {
+        var formData = new FormData(document.getElementById('uploadForm'));
+        fetch('/upload', {
+            method: 'POST',
+            body: formData
+        }).then(response => {
+            // 检查是否成功
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            // 从响应头获取文件名
+            const filename = response.headers.get('content-disposition')
+                ?.split(';')
+                ?.find(n => n.includes('filename='))
+                ?.replace('filename=', '')
+                ?.trim() || 'process.xlsx';
+
+            // 将响应转换为blob
+            return response.blob().then(blob => {
+                // 创建下载链接
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                // 清理
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
+            });
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert("下载文件失败");
+        });
+    }
+    </script>
+</body>
+</html>
